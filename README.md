@@ -6,7 +6,7 @@ The barcode program reads a sequence of `.smp` files, translates the first parti
 
 ## Paper and implementation status
 
-This software is a loose, independent adaptation inspired by [Computing Conley-Morse Persistence Barcode Efficiently by Updating Matrix Decompositions](https://arxiv.org/abs/2608.06507) by Tamal K. Dey, Andrew Haas, and Michał Lipiński.
+This software is an efficient implementation of the algorithm presented in [Computing Conley-Morse Persistence Barcode Efficiently by Updating Matrix Decompositions](https://arxiv.org/abs/2608.06507) by Tamal K. Dey, Andrew Haas, and Michał Lipiński.
 
 ## Group information
 
