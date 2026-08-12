@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     write_barcodes_(std::cout, no_quotient ? raw_barcodes_(pc) : endpoint_quotient_barcodes(pc, endpoint_steps), pretty);
     return 0;
   } catch (const std::exception& e) {
-    std::cerr << "mvf_barcodes: " << e.what() << '\n';
+    std::cerr << "cmvf_barcodes: " << e.what() << '\n';
     return 1;
   }
 }

@@ -1,6 +1,9 @@
 /build/
 /examples/large_grid_14/
 /MVFbarcode.pdf
+/CMVFBarcode.pdf
+/MVFBarcode-GIT-WORKFLOW.txt
+/CMVFBarcode-GIT-WORKFLOW.txt
 /agents.md
 /.agents/
 /.codex/
@@ -8,4 +11,3 @@
 __pycache__/
 *.py[cod]
 .DS_Store
-

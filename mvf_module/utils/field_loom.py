@@ -1,5 +1,5 @@
 #
-# Quick planar test-data generator for the MVF barcode program.
+# Quick planar test-data generator for CMVFBarcode.
 #
 # In short, this file provides a set of tools to discretize a time varying vector valued equation
 # over a rectangular region of R^2. For each timestep, a `.smp` file is generated. These may be parsed

@@ -12,8 +12,8 @@
 #
 # Then run, for example:
 #
-#     ./build/mvf_barcodes examples/small_endpoint_quotient/frame_*.smp
-#     ./build/mvf_barcodes examples/large_grid_14/frame_*.smp
+#     ./build/cmvf_barcodes examples/small_endpoint_quotient/frame_*.smp
+#     ./build/cmvf_barcodes examples/large_grid_14/frame_*.smp
 
 from pathlib import Path
 

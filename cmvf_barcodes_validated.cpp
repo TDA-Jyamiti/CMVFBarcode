@@ -12,7 +12,7 @@
 // VALIDATED BLOCK-FILTRATION INPUT
 // ================================
 //
-// This is the restrictive companion to `mvf_barcodes.cpp`, which accepts any sequence of
+// This is the restrictive companion to `cmvf_barcodes.cpp`, which accepts any sequence of
 // multivector fields on one fixed simplicial complex. Here the raw inputs must form a zigzag
 // filtration of block partitions in the sense of the motivating preprint arXiv:2608.06507:
 //
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     }
     return 0;
   } catch (const std::exception& e) {
-    std::cerr << "mvf_barcodes_validated: " << e.what() << '\n';
+    std::cerr << "cmvf_barcodes_validated: " << e.what() << '\n';
     return 1;
   }
 }

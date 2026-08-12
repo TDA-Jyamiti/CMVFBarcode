@@ -1,6 +1,8 @@
-# MVF barcodes
+# CMVFBarcode
 
-A small C++20 tool and header-only library for computing barcode intervals from a sequence of multivector-field partitions on a fixed simplicial complex.
+A small C++20 tool and header-only library for computing barcode intervals from a sequence of combinatorial multivector-field partitions on a fixed simplicial complex.
+
+The name **CMVFBarcode** deliberately gives “CM” two readings: **Conley–Morse**, for the theory behind the persistence barcode, and **Combinatorial Multi-**, for the multivector fields supplied as input.
 
 The barcode program reads a sequence of `.smp` files, translates the first partition through the later partitions, and writes barcode data as JSON. A second program validates binary merge/split zigzag filtrations of block partitions. The package also includes a small Python utility for generating planar test data from sampled vector fields.
 
@@ -26,8 +28,8 @@ make
 This builds:
 
 ```bash
-build/mvf_barcodes
-build/mvf_barcodes_validated
+build/cmvf_barcodes
+build/cmvf_barcodes_validated
 ```
 
 Run the end-to-end barcode checks with:
@@ -43,7 +45,7 @@ If `examples/large_grid_14` is absent, the test script generates that fixture in
 Use one or more `.smp` frames from the same fixed simplicial complex; e.g.
 
 ```bash
-./build/mvf_barcodes examples/small_endpoint_quotient/frame_*.smp
+./build/cmvf_barcodes examples/small_endpoint_quotient/frame_*.smp
 ```
 
 The default output is compact JSON; e.g.
@@ -55,10 +57,12 @@ The default output is compact JSON; e.g.
 Use `--pretty` for indented output; e.g.
 
 ```bash
-./build/mvf_barcodes --pretty examples/small_endpoint_quotient/frame_*.smp
+./build/cmvf_barcodes --pretty examples/small_endpoint_quotient/frame_*.smp
 ```
 
 Here `birth` and `death` are input-frame indices. A `null` death means the feature is still alive after the final input.
+
+The `mvf_barcodes_v1` schema name is retained as a stable compatibility identifier for existing consumers.
 
 ## Endpoint quotienting
 
@@ -67,19 +71,19 @@ The reported intervals use the endpoint-quotient convention. During the translat
 Use `--no-quotient` to report raw internal translation steps instead; e.g.
 
 ```bash
-./build/mvf_barcodes --no-quotient examples/small_endpoint_quotient/frame_*.smp
+./build/cmvf_barcodes --no-quotient examples/small_endpoint_quotient/frame_*.smp
 ```
 
 ## Validate block sequences
 
-`mvf_barcodes_validated` checks that raw `.smp` inputs form a zigzag filtration of block partitions in the sense of the motivating [preprint](https://arxiv.org/abs/2608.06507). Unlike `mvf_barcodes`, which accepts any sequence of multivector fields on the same complex, this program requires every adjacent pair to be related by refinement in one direction or the other. Every input must describe the same simplex-id-preserving complex, and every partition must remain unchanged when its quotient block graph is coalesced by strongly connected components. Block membership is compared independently of multivector record labels.
+`cmvf_barcodes_validated` checks that raw `.smp` inputs form a zigzag filtration of block partitions in the sense of the motivating [preprint](https://arxiv.org/abs/2608.06507). Unlike `cmvf_barcodes`, which accepts any sequence of multivector fields on the same complex, this program requires every adjacent pair to be related by refinement in one direction or the other. Every input must describe the same simplex-id-preserving complex, and every partition must remain unchanged when its quotient block graph is coalesced by strongly connected components. Block membership is compared independently of multivector record labels.
 
 Each adjacent pair must differ by exactly one operation: either two blocks merge into one, or one block splits into exactly two. The program is silent and returns zero on success; malformed input, a non-block partition, a complex mismatch, or a non-binary transition produces a diagnostic and a nonzero status.
 
 For example, the last three small frames form one split followed by one merge:
 
 ```bash
-./build/mvf_barcodes_validated \
+./build/cmvf_barcodes_validated \
   examples/small_endpoint_quotient/frame_0001.smp \
   examples/small_endpoint_quotient/frame_0002.smp \
   examples/small_endpoint_quotient/frame_0003.smp

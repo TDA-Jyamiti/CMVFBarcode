@@ -17,29 +17,29 @@ write_large(Path(sys.argv[1]))
 PY
 fi
 
-./build/mvf_barcodes --help >/dev/null
-./build/mvf_barcodes_validated --help >/dev/null
+./build/cmvf_barcodes --help >/dev/null
+./build/cmvf_barcodes_validated --help >/dev/null
 
-if ./build/mvf_barcodes >/dev/null 2>&1; then
-  echo 'mvf_barcodes unexpectedly accepted missing input' >&2
+if ./build/cmvf_barcodes >/dev/null 2>&1; then
+  echo 'cmvf_barcodes unexpectedly accepted missing input' >&2
   exit 1
 fi
-if ./build/mvf_barcodes_validated >/dev/null 2>&1; then
-  echo 'mvf_barcodes_validated unexpectedly accepted missing input' >&2
+if ./build/cmvf_barcodes_validated >/dev/null 2>&1; then
+  echo 'cmvf_barcodes_validated unexpectedly accepted missing input' >&2
   exit 1
 fi
 
-./build/mvf_barcodes examples/small_endpoint_quotient/frame_*.smp > build/test/small_endpoint.json
-./build/mvf_barcodes --pretty examples/small_endpoint_quotient/frame_*.smp > build/test/small_pretty.json
-./build/mvf_barcodes --no-quotient examples/small_endpoint_quotient/frame_*.smp > build/test/small_raw.json
-./build/mvf_barcodes "$large_dir"/frame_*.smp > build/test/large_endpoint.json
+./build/cmvf_barcodes examples/small_endpoint_quotient/frame_*.smp > build/test/small_endpoint.json
+./build/cmvf_barcodes --pretty examples/small_endpoint_quotient/frame_*.smp > build/test/small_pretty.json
+./build/cmvf_barcodes --no-quotient examples/small_endpoint_quotient/frame_*.smp > build/test/small_raw.json
+./build/cmvf_barcodes "$large_dir"/frame_*.smp > build/test/large_endpoint.json
 
-./build/mvf_barcodes_validated \
+./build/cmvf_barcodes_validated \
   examples/small_endpoint_quotient/frame_0001.smp \
   examples/small_endpoint_quotient/frame_0002.smp \
   examples/small_endpoint_quotient/frame_0003.smp
 
-if ./build/mvf_barcodes_validated \
+if ./build/cmvf_barcodes_validated \
   examples/small_endpoint_quotient/frame_0000.smp \
   examples/small_endpoint_quotient/frame_0001.smp \
   > build/test/nonbinary.out 2> build/test/nonbinary.err; then
@@ -47,7 +47,7 @@ if ./build/mvf_barcodes_validated \
   exit 1
 fi
 
-if ./build/mvf_barcodes_validated \
+if ./build/cmvf_barcodes_validated \
   examples/small_endpoint_quotient/frame_0001.smp \
   examples/small_endpoint_quotient/frame_0001.smp \
   > build/test/unchanged.out 2> build/test/unchanged.err; then
