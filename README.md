@@ -200,10 +200,6 @@ generate_sequence(
 )
 ```
 
-## License
-
-This project is available under the [MIT License](LICENSE).
-
 ## Citation
 
 The mathematical motivation for this software comes from the following preprint
