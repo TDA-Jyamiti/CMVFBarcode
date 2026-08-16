@@ -33,6 +33,8 @@ fi
 ./build/cmvf_barcodes --pretty examples/small_endpoint_quotient/frame_*.smp > build/test/small_pretty.json
 ./build/cmvf_barcodes --no-quotient examples/small_endpoint_quotient/frame_*.smp > build/test/small_raw.json
 ./build/cmvf_barcodes "$large_dir"/frame_*.smp > build/test/large_endpoint.json
+./build/cmvf_barcodes --validated test/data/paper_atomic_0000.smp test/data/paper_atomic_0001.smp > build/test/paper_atomic.json
+./build/cmvf_barcodes --validated --no-quotient test/data/paper_atomic_0000.smp test/data/paper_atomic_0001.smp > build/test/paper_atomic_raw.json
 
 ./build/cmvf_barcodes_validated \
   examples/small_endpoint_quotient/frame_0001.smp \
@@ -63,6 +65,8 @@ small = json.loads(Path('build/test/small_endpoint.json').read_text())
 pretty = json.loads(Path('build/test/small_pretty.json').read_text())
 raw = json.loads(Path('build/test/small_raw.json').read_text())
 large = json.loads(Path('build/test/large_endpoint.json').read_text())
+paper = json.loads(Path('build/test/paper_atomic.json').read_text())
+paper_raw = json.loads(Path('build/test/paper_atomic_raw.json').read_text())
 
 assert small['schema'] == 'mvf_barcodes_v1'
 assert large['schema'] == 'mvf_barcodes_v1'
@@ -86,6 +90,24 @@ assert raw == {
     ],
 }
 assert len(large['barcodes']) == 14
+assert paper == {
+    'schema': 'mvf_barcodes_v1',
+    'barcodes': [
+        {'dimension': 0, 'birth': 0, 'death': None},
+        {'dimension': 1, 'birth': 0, 'death': None},
+        {'dimension': 2, 'birth': 0, 'death': None},
+    ],
+}
+assert paper_raw == {
+    'schema': 'mvf_barcodes_v1',
+    'barcodes': [
+        {'dimension': 0, 'birth': 0, 'death': None},
+        {'dimension': 0, 'birth': 5, 'death': 7},
+        {'dimension': 1, 'birth': 0, 'death': None},
+        {'dimension': 1, 'birth': 5, 'death': 7},
+        {'dimension': 2, 'birth': 0, 'death': None},
+    ],
+}
 
 for out in (small, large):
     for b in out['barcodes']:

@@ -8,3 +8,4 @@
 #include "smp_io.hpp"
 #include "barcodes.hpp"
 #include "translate.hpp"
+#include "block_filtration.hpp"

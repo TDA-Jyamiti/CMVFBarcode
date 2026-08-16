@@ -3,13 +3,14 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "mvf_module/mvf_module.hpp"
 
 static inline void print_usage_(std::ostream& out, const char* argv0)
 {
-  out << "usage: " << argv0 << " [--pretty] [--no-quotient] frame_0000.smp frame_0001.smp ...\n";
+  out << "usage: " << argv0 << " [--pretty] [--no-quotient] [--validated] frame_0000.smp frame_0001.smp ...\n";
 }
 
 static inline void write_time_(std::ostream& out, partitioned_complex::time_type t)
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
   try {
     bool pretty = false;
     bool no_quotient = false;
+    bool validated = false;
     std::vector<std::string> paths;
 
     for (int i = 1; i < argc; ++i) {
@@ -72,19 +74,26 @@ int main(int argc, char** argv)
       if (arg == "-h" || arg == "--help") { print_usage_(std::cout, argv[0]); return 0; }
       if (arg == "--pretty") { pretty = true; continue; }
       if (arg == "--no-quotient") { no_quotient = true; continue; }
+      if (arg == "--validated") { validated = true; continue; }
       paths.push_back(arg);
     }
     if (paths.empty()) { print_usage_(std::cerr, argv[0]); return 1; }
 
     partitioned_complex pc;
     if (!load_smp(paths.front().c_str(), pc)) throw std::runtime_error(std::string("failed to load ") + paths.front());
+    if (validated) {
+      std::vector<partitioned_complex::class_id> raw;
+      if (!load_smp_partition_map_checked(paths.front().c_str(), pc, raw)) throw std::runtime_error(std::string("failed to validate ") + paths.front());
+      if (!is_block_partition(pc, canonical_block_partition(std::move(raw)))) throw std::runtime_error(paths.front() + ": SCC coalescing changes the partition");
+    }
 
     std::vector<partitioned_complex::time_type> endpoint_steps;
     endpoint_steps.reserve(paths.size());
     endpoint_steps.push_back(pc.step);
 
     for (std::size_t i = 1; i < paths.size(); ++i) {
-      translate_partition_to_smp(pc, paths[i].c_str());
+      if (validated) translate_block_partition_to_smp(pc, paths[i].c_str());
+      else translate_partition_to_smp(pc, paths[i].c_str());
       endpoint_steps.push_back(pc.step);
     }
 

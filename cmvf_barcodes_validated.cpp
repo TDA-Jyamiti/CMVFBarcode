@@ -6,8 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "mvf_module/partitioned_complex.hpp"
-#include "mvf_module/smp_io.hpp"
+#include "mvf_module/block_filtration.hpp"
 
 // VALIDATED BLOCK-FILTRATION INPUT
 // ================================
@@ -44,41 +43,6 @@
 // Every fine block has one image; exactly one coarse block has two. Reversing the arrows gives one
 // split.
 
-struct block_partition {
-  using class_id = partitioned_complex::class_id;
-
-  std::vector<class_id> block_of;
-  std::size_t block_count = 0;
-};
-
-static inline block_partition canonical_partition_(std::vector<partitioned_complex::class_id> block_of)
-{
-  using class_id = partitioned_complex::class_id;
-
-  std::vector<class_id> canonical(block_of.size(), partitioned_complex::invalid_class);
-  std::size_t block_count = 0;
-  for (class_id& block : block_of) {
-    if (static_cast<std::size_t>(block) >= canonical.size()) throw std::runtime_error("partition contains an invalid block id");
-    if (canonical[block] == partitioned_complex::invalid_class) canonical[block] = static_cast<class_id>(block_count++);
-    block = canonical[block];
-  }
-  return { std::move(block_of), block_count };
-}
-
-static inline bool is_one_merge_(const block_partition& fine, const block_partition& coarse)
-{
-  if (fine.block_of.size() != coarse.block_of.size() || fine.block_count != coarse.block_count + 1) return false;
-
-  std::vector<block_partition::class_id> image(fine.block_count, partitioned_complex::invalid_class);
-  for (std::size_t s = 0; s < fine.block_of.size(); ++s) {
-    const auto source = fine.block_of[s];
-    const auto target = coarse.block_of[s];
-    if (image[source] == partitioned_complex::invalid_class) image[source] = target;
-    else if (image[source] != target) return false;
-  }
-  return true;
-}
-
 static inline void print_usage_(std::ostream& out, const char* argv0)
 {
   out << "usage: " << argv0 << " frame_0000.smp frame_0001.smp ...\n";
@@ -98,11 +62,10 @@ int main(int argc, char** argv)
       std::vector<partitioned_complex::class_id> raw;
       if (!load_smp_partition_map_checked(argv[i], complex, raw)) throw std::runtime_error(std::string(argv[i]) + ": invalid .smp file or simplex mismatch");
 
-      block_partition current = canonical_partition_(std::move(raw));
-      const block_partition coarsened = canonical_partition_(complex.coarsen_partition_map(current.block_of));
-      if (current.block_of != coarsened.block_of) throw std::runtime_error(std::string(argv[i]) + ": SCC coalescing changes the partition");
+      block_partition current = canonical_block_partition(std::move(raw));
+      if (!is_block_partition(complex, current)) throw std::runtime_error(std::string(argv[i]) + ": SCC coalescing changes the partition");
 
-      if (i > 1 && !is_one_merge_(previous, current) && !is_one_merge_(current, previous))
+      if (i > 1 && !is_atomic_block_transition(previous, current))
         throw std::runtime_error(std::string(argv[i - 1]) + " -> " + argv[i] + ": transition is not exactly one binary merge or split");
       previous = std::move(current);
     }

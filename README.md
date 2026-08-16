@@ -4,7 +4,7 @@ A small C++20 tool and header-only library for computing barcode intervals from 
 
 The name **CMVFBarcode** deliberately gives “CM” two readings: **Conley–Morse**, for the theory behind the persistence barcode, and **Combinatorial Multi-**, for the multivector fields supplied as input.
 
-The barcode program reads a sequence of `.smp` files, translates the first partition through the later partitions, and writes barcode data as JSON. A second program validates binary merge/split zigzag filtrations of block partitions. The package also includes a small Python utility for generating planar test data from sampled vector fields.
+The barcode program reads a sequence of `.smp` files, translates the first partition through the later partitions, and writes barcode data as JSON. Its default mode connects arbitrary partitions; `--validated` instead computes the paper-defined sequence for an atomic merge/split filtration of block partitions. A second program validates such filtrations without computing a barcode. The package also includes a small Python utility for generating planar test data from sampled vector fields.
 
 ## Paper and implementation status
 
@@ -19,7 +19,8 @@ This project was developed by the [Computational Geometry and Topological Data A
 Requirements:
 
 - a C++20 compiler;
-- Python 3 and NumPy, only if regenerating the example data sets or running the tests when the large generated fixture is absent.
+- Python 3.10 or newer to run the tests or regenerate example data;
+- NumPy when regenerating example data, including the temporary large fixture used by tests in a fresh checkout.
 
 ```bash
 make
@@ -60,9 +61,25 @@ Use `--pretty` for indented output; e.g.
 ./build/cmvf_barcodes --pretty examples/small_endpoint_quotient/frame_*.smp
 ```
 
-Here `birth` and `death` are input-frame indices. A `null` death means the feature is still alive after the final input.
+Here `birth` and `death` are input-frame indices, and intervals are half-open: a feature is present at frame `i` when `birth <= i < death`. A `null` death means the feature is still alive after the final input.
 
 The `mvf_barcodes_v1` schema name is retained as a stable compatibility identifier for existing consumers.
+
+### Validated block-filtration mode
+
+Use `--validated` when the inputs form the atomic zigzag filtration of block partitions required by the paper; e.g.
+
+```bash
+./build/cmvf_barcodes --validated \
+  test/data/paper_atomic_0000.smp \
+  test/data/paper_atomic_0001.smp
+```
+
+Every raw frame must survive SCC coarsening unchanged, and every consecutive pair must differ by exactly one binary block split or merge. For a split `B = W ⊔ V`, the implementation identifies the child `W` closed in `B`, stably orders the parent as `[W | V]`, and executes the paper's recursive maximal-simplex expansion with elementary right splits and merges. The reverse sequence implements a merge; transpositions between differently adapted block orders carry the required changes of basis.
+
+Without `--validated`, `cmvf_barcodes` retains the general maximum-overlap translator. That mode deliberately accepts arbitrary multivector-field sequences which need not be related by block refinements, so its connecting route is not the restrictive block-filtration construction.
+
+Loading coalesces raw blocks that belong to the same strongly connected component of the quotient block graph. Validated mode rejects a frame if this changes its raw partition; general mode continues with the coarsened partition.
 
 ## Endpoint quotienting
 
@@ -74,9 +91,11 @@ Use `--no-quotient` to report raw internal translation steps instead; e.g.
 ./build/cmvf_barcodes --no-quotient examples/small_endpoint_quotient/frame_*.smp
 ```
 
+In this mode, `birth` and `death` are implementation-dependent elementary-operation step numbers rather than input-frame indices. The schema identifier remains `mvf_barcodes_v1` for compatibility.
+
 ## Validate block sequences
 
-`cmvf_barcodes_validated` checks that raw `.smp` inputs form a zigzag filtration of block partitions in the sense of the motivating [preprint](https://arxiv.org/abs/2608.06507). Unlike `cmvf_barcodes`, which accepts any sequence of multivector fields on the same complex, this program requires every adjacent pair to be related by refinement in one direction or the other. Every input must describe the same simplex-id-preserving complex, and every partition must remain unchanged when its quotient block graph is coalesced by strongly connected components. Block membership is compared independently of multivector record labels.
+`cmvf_barcodes_validated` checks the same input conditions as `cmvf_barcodes --validated`, but remains silent and does not compute a barcode. Unlike the default general barcode mode, it requires every adjacent pair to be related by refinement in one direction or the other. Every input must describe the same simplex-id-preserving complex, and every partition must remain unchanged when its quotient block graph is coalesced by strongly connected components. Block membership is compared independently of multivector record labels.
 
 Each adjacent pair must differ by exactly one operation: either two blocks merge into one, or one block splits into exactly two. The program is silent and returns zero on success; malformed input, a non-block partition, a complex mismatch, or a non-binary transition produces a diagnostic and a nonzero status.
 
@@ -103,18 +122,16 @@ The fundamental input is a `.smp` file. Each file has a simplex section followed
 1:1
 ```
 
-The simplex section assigns dense, ordered integer ids to abstract simplices and lists their constituent vertices. The multivector section has uniquely labeled records that may list any nonempty blocks by simplex id. Record labels and order do not affect block identity. Simplices omitted from the multivector section are treated as singleton multivectors.
+The simplex section assigns dense, ordered integer ids to abstract simplices and lists their constituent vertices. The multivector section has uniquely labeled records that may list any nonempty blocks by simplex id. Record labels and order do not affect block membership. In general mode, record order supplies internal class ids and can affect which connecting route is selected when maximum-overlap matchings are tied; validated mode is invariant to record labels and order. Simplices omitted from the multivector section are treated as singleton multivectors.
 
 All files passed in one run must describe the same simplicial complex, with the same simplex ids. Only the partition is allowed to change from frame to frame.
-
-All homology and matrix-reduction computations use coefficients in `GF(2)`.
 
 ## Library use
 
 The headers can also be used directly:
 
 ```cpp
-#include <cassert>
+#include <stdexcept>
 #include <vector>
 
 #include "mvf_module/mvf_module.hpp"
@@ -122,7 +139,8 @@ The headers can also be used directly:
 int main()
 {
   partitioned_complex pc;
-  assert(load_smp("examples/small_endpoint_quotient/frame_0000.smp", pc));
+  if (!load_smp("examples/small_endpoint_quotient/frame_0000.smp", pc))
+    throw std::runtime_error("failed to load initial frame");
 
   std::vector<partitioned_complex::time_type> endpoints;
   endpoints.push_back(pc.step);
@@ -134,11 +152,7 @@ int main()
 }
 ```
 
-## Shared graph representation
-
-`mvf_module/graph_utilities.hpp` contains the library's graph representation and graph algorithms. Its reusable `csr_graph` stores outgoing adjacency in compressed sparse row form: `offset[v]` and `offset[v + 1]` delimit the targets of vertex `v` in `edges`. Unweighted graphs leave the parallel `weights` array empty, so they retain four bytes of target storage per edge; weighted graphs allocate one aligned 32-bit weight per edge.
-
-The same object is used for the simplicial codimension-one incidence graph, the directed class graph whose strong components are coalesced, the symmetric weighted overlap graph used for partition matching, and the densely relabeled matching components. Builders, reversal, iterative strong-component decomposition, overlap construction, and matching are all kept in this one header.
+For a validated atomic block filtration, replace `translate_partition_to_smp` with `translate_block_partition_to_smp`. The latter rejects a source or destination that is not an SCC-stable block partition, and rejects a destination that is not one atomic refinement away from the current partition.
 
 ## Generating example data
 
@@ -177,6 +191,8 @@ field_t(point, t) -> vector
 
 Then pass it to `generate_sequence`.
 
+Generation removes existing `frame_*.smp` files from the destination directory before writing the replacement sequence, so use a dedicated output directory.
+
 Run custom generator scripts from the repository root with `PYTHONPATH=mvf_module/utils python3 -B your_script.py` so the utility modules are importable without creating bytecode files.
 
 A minimal generator sketch is:
@@ -199,6 +215,10 @@ generate_sequence(
     bind_boundary=True,
 )
 ```
+
+## License
+
+CMVFBarcode is available under the short attribution license in [LICENSE](LICENSE). Users are asked to cite the paper and credit its authors and the CGTDA research group at Purdue University when the software contributes to published or distributed work.
 
 ## Citation
 
