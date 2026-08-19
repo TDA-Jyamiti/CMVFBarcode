@@ -77,7 +77,7 @@ Use `--validated` when the inputs form the atomic zigzag filtration of block par
 
 Every raw frame must survive SCC coarsening unchanged, and every consecutive pair must differ by exactly one binary block split or merge. For a split `B = W ⊔ V`, the implementation identifies the child `W` closed in `B`, stably orders the parent as `[W | V]`, and executes the paper's recursive maximal-simplex expansion with elementary right splits and merges. The reverse sequence implements a merge; transpositions between differently adapted block orders carry the required changes of basis.
 
-Without `--validated`, `cmvf_barcodes` retains the general maximum-overlap translator. That mode deliberately accepts arbitrary multivector-field sequences which need not be related by block refinements, so its connecting route is not the restrictive block-filtration construction.
+Without `--validated`, `cmvf_barcodes` utilizes a general maximum-overlap translator. This mode deliberately accepts arbitrary multivector-field sequences which need not be related by block refinements, so its connecting route is not the restrictive block-filtration construction. Our translator attempts to do this in an efficient way, requiring a heuristically small number of transpose, split, and merge operations.
 
 Loading coalesces raw blocks that belong to the same strongly connected component of the quotient block graph. Validated mode rejects a frame if this changes its raw partition; general mode continues with the coarsened partition.
 
